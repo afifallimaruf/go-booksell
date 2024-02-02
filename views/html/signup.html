@@ -1,0 +1,32 @@
+{{ template "base" .}}
+
+{{ define "title" }} Signup {{ end }}
+
+{{ define "content" }}
+    <div class="container">
+        <form method="post" action="/signup">
+            <div class="mb-3">
+                <label for="exampleInputPassword1" class="form-label">Name</label>
+                {{ with .FormErrors.name }}
+                <label class="error">{{ . }}</label>
+                {{ end }}
+                <input type="text" name="name" class="form-control" value='{{ .FormData.Get "name" }}'>
+            </div>
+            <div class="mb-3">
+                <label for="exampleInputEmail1" class="form-label">Email address</label>
+                {{ with .FormErrors.email }}
+                <label class="error">{{ . }}</label>
+                {{ end }}
+                <input type="email" name="email" class="form-control" value='{{ .FormData.Get "email" }}'>
+            </div>
+            <div class="mb-3">
+                <label for="exampleInputPassword1" class="form-label">Password</label>
+                {{ with .FormErrors.password }}
+                <label class="error">{{ . }}</label>
+                {{ end }}
+                <input type="password" name="password" class="form-control" id="exampleInputPassword1" value='{{ .FormData.Get "password" }}'>
+            </div>
+            <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+    </div>
+{{ end }}

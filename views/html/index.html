@@ -1,0 +1,20 @@
+{{ template "base" .}}
+{{ define "title" }} Home {{ end }}
+{{ define "content" }}
+<div class="container">
+  {{ range .Books }}
+  <div class="row ms-1"> 
+    <div class="col col-sm-6 mb-3 mb-sm-0">
+      <div class="card" style="width: 10rem; height: 22rem;">
+        <img src="../static/images/{{ .Image }}" class="card-img-top" alt="..." width="10" height="200">
+        <div class="card-body">
+          <h6 class="card-title text-center">{{ .Title }}</h6>
+          <p class="card-text text-center">Rp. {{ .Price }}</p>
+          <a href="/add-chart" class="btn btn-primary btn-chart ms-2">Add to chart</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{ end }}
+</div>
+{{ end }}
