@@ -4,29 +4,31 @@
 
 {{ define "content" }}
     <div class="container">
-        <form method="post" action="/signup">
+        <form method="post" action="/signup" novalidate> 
+            {{ with .Form }}
             <div class="mb-3">
                 <label for="exampleInputPassword1" class="form-label">Name</label>
-                {{ with .FormErrors.name }}
+                {{ with .Errors.Get "name" }}
                 <label class="error">{{ . }}</label>
                 {{ end }}
-                <input type="text" name="name" class="form-control" value='{{ .FormData.Get "name" }}'>
+                <input type="text" name="name" class="form-control" value='{{ .Get "name" }}'>
             </div>
             <div class="mb-3">
                 <label for="exampleInputEmail1" class="form-label">Email address</label>
-                {{ with .FormErrors.email }}
+                {{ with .Errors.Get "email" }}
                 <label class="error">{{ . }}</label>
                 {{ end }}
-                <input type="email" name="email" class="form-control" value='{{ .FormData.Get "email" }}'>
+                <input type="email" name="email" class="form-control" value='{{ .Get "email" }}'>
             </div>
             <div class="mb-3">
                 <label for="exampleInputPassword1" class="form-label">Password</label>
-                {{ with .FormErrors.password }}
+                {{ with .Errors.Get "password" }}
                 <label class="error">{{ . }}</label>
                 {{ end }}
-                <input type="password" name="password" class="form-control" id="exampleInputPassword1" value='{{ .FormData.Get "password" }}'>
+                <input type="password" name="password" class="form-control" id="exampleInputPassword1" value='{{ .Get "password" }}'>
             </div>
             <button type="submit" class="btn btn-primary">Register</button>
+            {{ end }}
         </form>
     </div>
 {{ end }}

@@ -5,18 +5,20 @@
 {{ define "content" }}
 <div class="container">
     <form method="post" action="/login">
-        {{ with .FormErrors.generic }}
+        {{ with .Form }}
+        {{ with .Errors.Get "generic" }}
             <label class="login-error">{{ . }}</label>
             {{ end }}
         <div class="mb-3">
             <label for="exampleInputEmail1" class="form-label">Email address</label>
-            <input type="email" name="email" class="form-control" value='{{ .FormData.Get "email" }}'>
+            <input type="email" name="email" class="form-control" value='{{ .Get "email" }}'>
         </div>
         <div class="mb-3">
             <label for="exampleInputPassword1" class="form-label">Password</label>
             <input type="password" name="password" class="form-control" id="exampleInputPassword1">
         </div>
         <button type="submit" class="btn btn-primary">Login</button>
+        {{ end }}
     </form>
 </div>
 {{ end }}

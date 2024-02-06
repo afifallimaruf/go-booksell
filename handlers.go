@@ -2,8 +2,10 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/afifallimaruf/go-booksell/forms"
 	"github.com/afifallimaruf/go-booksell/models"
 	"github.com/afifallimaruf/go-booksell/models/mysql"
 )
@@ -16,7 +18,7 @@ func (app *application) indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	flash := app.session.PopString(r, "flash")
 
-	app.render(w, r, templateData{
+	app.render(w, r, &templateData{
 		Flash:           flash,
 		Books:           books,
 		IsAuthenticated: app.isAuthenticated(r),
@@ -24,31 +26,33 @@ func (app *application) indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) booksHandler(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, templateData{
+	app.render(w, r, &templateData{
 		IsAuthenticated: app.isAuthenticated(r),
 	}, "views/html/books.html", "views/html/base.html")
 }
 
 func (app *application) addChart(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, templateData{
+	app.render(w, r, &templateData{
 		IsAuthenticated: app.isAuthenticated(r),
 	}, "views/html/chart.html", "views/html/base.html")
 }
 
 func (app *application) aboutHandler(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, templateData{
+	app.render(w, r, &templateData{
 		IsAuthenticated: app.isAuthenticated(r),
 	}, "views/html/about.html", "views/html/base.html")
 }
 
 func (app *application) nonFictionHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/category/non-fiction" {
-		app.render(w, r, templateData{}, "views/html/non_fiction.html", "views/html/base.html")
+		app.render(w, r, &templateData{}, "views/html/non_fiction.html", "views/html/base.html")
 	}
 }
 
 func (app *application) signupPage(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, templateData{}, "views/html/signup.html", "views/html/base.html")
+	app.render(w, r, &templateData{
+		Form: forms.New(nil),
+	}, "views/html/signup.html", "views/html/base.html")
 }
 
 func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
@@ -56,29 +60,25 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 		app.errorLog.Fatal(err)
 	}
 
-	name := r.PostForm.Get("name")
-	email := r.PostForm.Get("email")
-	pass := r.PostForm.Get("password")
+	form := forms.New(r.PostForm)
+	form.Required("name", "email", "password")
+	form.MaxLength("password", 5)
+	form.MatchesPattern("email", forms.EmailRX)
+	fmt.Println(form)
 
-	errs := validateSignup(name, email, pass, 10, EmailRX)
-
-	if len(errs) > 0 {
-		app.render(w, r, templateData{
-			FormErrors: errs,
-			FormData:   r.PostForm,
+	if !form.Valid() {
+		app.render(w, r, &templateData{
+			Form: form,
 		}, "views/html/signup.html", "views/html/base.html")
 
 		return
 	}
 
-	if err := mysql.Insert(name, email, pass); err != nil {
-		// Belum berfungsi
-		ErrDuplicateEmail := errors.New("models: duplicate email")
-		if errors.Is(err, ErrDuplicateEmail) {
-			errs = validateSignup(name, email, pass, 10, EmailRX)
-			app.render(w, r, templateData{
-				FormErrors: errs,
-				FormData:   r.PostForm,
+	if err := mysql.Insert(form.Get("name"), form.Get("email"), form.Get("password")); err != nil {
+		if errors.Is(err, models.ErrDuplicateEmail) {
+			form.Errors.Add("email", "Address is already in use")
+			app.render(w, r, &templateData{
+				Form: form,
 			}, "views/html/signup.html", "views/html/base.html")
 		} else {
 			app.errorLog.Fatal(err)
@@ -91,7 +91,9 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) loginPage(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, templateData{}, "views/html/login.html", "views/html/base.html")
+	app.render(w, r, &templateData{
+		Form: forms.New(nil),
+	}, "views/html/login.html", "views/html/base.html")
 }
 
 func (app *application) loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,19 +101,14 @@ func (app *application) loginHandler(w http.ResponseWriter, r *http.Request) {
 		app.errorLog.Fatal(err)
 	}
 
-	email := r.PostForm.Get("email")
-	password := r.PostForm.Get("password")
+	form := forms.New(r.PostForm)
 
-	id, err := mysql.Authenticate(email, password)
+	id, err := mysql.Authenticate(form.Get("email"), form.Get("password"))
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidCredentials) {
-			errs := map[string]string{
-				"generic": "Email or Password is incorrect",
-			}
-
-			app.render(w, r, templateData{
-				FormErrors: errs,
-				FormData:   r.PostForm,
+			form.Errors.Add("generic", "Email or Password is incorrect")
+			app.render(w, r, &templateData{
+				Form: form,
 			}, "views/html/login.html", "views/html/base.html")
 		} else {
 			app.errorLog.Fatal(err)
@@ -134,7 +131,7 @@ func (app *application) logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) addBooksForm(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, templateData{
+	app.render(w, r, &templateData{
 		IsAuthenticated: app.isAuthenticated(r),
 	}, "views/html/add_books.html", "views/html/base.html")
 }

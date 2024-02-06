@@ -13,7 +13,7 @@ import (
 	"unicode/utf8"
 )
 
-func (app *application) render(w http.ResponseWriter, r *http.Request, data templateData, file ...string) {
+func (app *application) render(w http.ResponseWriter, r *http.Request, data *templateData, file ...string) {
 	tmp, err := template.ParseFiles(file...)
 	if err != nil {
 		app.errorLog.Fatal(err)

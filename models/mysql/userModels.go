@@ -29,7 +29,7 @@ func Insert(name, email, password string) error {
 		var mySQLError *mysql.MySQLError
 		if errors.As(err, &mySQLError) {
 			if mySQLError.Number == 1062 && strings.Contains(mySQLError.Message, "users_uc_email") {
-				return errors.New("models: duplicate email")
+				return models.ErrDuplicateEmail
 			}
 		}
 
