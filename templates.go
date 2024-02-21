@@ -8,6 +8,8 @@ import (
 type templateData struct {
 	Flash           string
 	IsAuthenticated bool
+	IsOnlyAdmin     bool
 	Form            *forms.Form
 	Books           []*models.Books
+	Book            *models.Books
 }

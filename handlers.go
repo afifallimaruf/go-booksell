@@ -38,15 +38,22 @@ func (app *application) addChart(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) aboutHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(app.session.Get(r, "authenticatedUserID"))
 	app.render(w, r, &templateData{
 		IsAuthenticated: app.isAuthenticated(r),
 	}, "views/html/about.html", "views/html/base.html")
 }
 
 func (app *application) nonFictionHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/category/non-fiction" {
-		app.render(w, r, &templateData{}, "views/html/non_fiction.html", "views/html/base.html")
+	book, err := mysql.GetNonFiction()
+	if err != nil {
+		app.errorLog.Fatal(err)
 	}
+
+	app.render(w, r, &templateData{
+		IsAuthenticated: app.isAuthenticated(r),
+		Book:            book,
+	}, "views/html/non_fiction.html", "views/html/base.html")
 }
 
 func (app *application) signupPage(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +71,6 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 	form.Required("name", "email", "password")
 	form.MaxLength("password", 5)
 	form.MatchesPattern("email", forms.EmailRX)
-	fmt.Println(form)
 
 	if !form.Valid() {
 		app.render(w, r, &templateData{
@@ -103,7 +109,7 @@ func (app *application) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	form := forms.New(r.PostForm)
 
-	id, err := mysql.Authenticate(form.Get("email"), form.Get("password"))
+	user, err := mysql.Authenticate(form.Get("email"), form.Get("password"))
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidCredentials) {
 			form.Errors.Add("generic", "Email or Password is incorrect")
@@ -117,7 +123,7 @@ func (app *application) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.session.Put(r, "authenticatedUserID", id)
+	app.session.Put(r, "authenticatedUserID", user.Id)
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
@@ -132,6 +138,7 @@ func (app *application) logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) addBooksForm(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, &templateData{
+		Form:            forms.New(nil),
 		IsAuthenticated: app.isAuthenticated(r),
 	}, "views/html/add_books.html", "views/html/base.html")
 }
@@ -152,11 +159,17 @@ func (app *application) addBooks(w http.ResponseWriter, r *http.Request) {
 
 	defer file.Close()
 
-	// memanggil datas
-	title := r.PostForm.Get("title")
-	author := r.PostForm.Get("author")
-	summary := r.PostForm.Get("summary")
-	price := r.PostForm.Get("price")
+	form := forms.New(r.PostForm)
+	form.Required("title", "author", "summary", "price", "category")
+
+	if !form.Valid() {
+		app.render(w, r, &templateData{
+			Form:            form,
+			IsAuthenticated: app.isAuthenticated(r),
+		}, "views/html/add_books.html", "views/html/base.html")
+
+		return
+	}
 
 	// lempar nama image ke fungsi untuk memasukan image kedalam directory
 	imgName, err := app.addImage(file, fileHeader)
@@ -164,7 +177,7 @@ func (app *application) addBooks(w http.ResponseWriter, r *http.Request) {
 		app.errorLog.Fatal(err)
 	}
 
-	if ok := mysql.InsertBook(title, author, summary, price, imgName); !ok {
+	if ok := mysql.InsertBook(form.Get("title"), form.Get("author"), form.Get("summary"), form.Get("price"), imgName, form.Get("category")); !ok {
 		app.errorLog.Fatal("ERROR")
 	}
 

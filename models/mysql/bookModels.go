@@ -6,15 +6,15 @@ import (
 )
 
 // model untuk menyimpan data buku ke database
-func InsertBook(title, author, summary, price, imgName string) bool {
-	query := "INSERT INTO books (title, author, summary, price, image) VALUES (?, ?, ?, ?, ?)"
+func InsertBook(title, author, summary, price, imgName, category string) bool {
+	query := "INSERT INTO books (title, author, summary, price, image, category) VALUES (?, ?, ?, ?, ?, ?)"
 
 	db, err := config.ConnectDB()
 	if err != nil {
 		panic(err)
 	}
 
-	result, err := db.Exec(query, title, author, summary, price, imgName)
+	result, err := db.Exec(query, title, author, summary, price, imgName, category)
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +45,7 @@ func GetBooks() ([]*models.Books, error) {
 	for rows.Next() {
 		book := &models.Books{}
 
-		rows.Scan(&book.Id, &book.Title, &book.Author, &book.Summary, &book.Price, &book.Image)
+		rows.Scan(&book.Id, &book.Title, &book.Author, &book.Summary, &book.Price, &book.Image, &book.Category)
 
 		books = append(books, book)
 	}
@@ -55,4 +55,24 @@ func GetBooks() ([]*models.Books, error) {
 	}
 
 	return books, nil
+}
+
+// Ambil data buku bergenre non fiksi
+func GetNonFiction() (*models.Books, error) {
+	db, err := config.ConnectDB()
+	if err != nil {
+		return nil, err
+	}
+
+	query := `SELECT * FROM books WHERE category = "Non-Fiction"`
+
+	row := db.QueryRow(query)
+
+	book := &models.Books{}
+
+	if err := row.Scan(&book.Id, &book.Title, &book.Author, &book.Summary, &book.Price, &book.Image, &book.Category); err != nil {
+		return nil, err
+	}
+
+	return book, nil
 }

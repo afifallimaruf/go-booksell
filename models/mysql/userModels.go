@@ -39,34 +39,35 @@ func Insert(name, email, password string) error {
 	return nil
 }
 
-func Authenticate(email, password string) (int, error) {
+func Authenticate(email, password string) (*models.User, error) {
 	db, err := config.ConnectDB()
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	var id int
-	var hashedPassword []byte
+	// var id int
+	// var hashedPassword []byte
 
-	query := "SELECT id, hashed_password FROM users WHERE email = ? AND active = TRUE"
+	query := "SELECT id, hashed_password, role FROM users WHERE email = ? AND active = TRUE"
 
 	row := db.QueryRow(query, email)
-	err = row.Scan(&id, &hashedPassword)
+	user := &models.User{}
+	err = row.Scan(&user.Id, &user.HashedPassword, &user.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, models.ErrInvalidCredentials
+			return nil, models.ErrInvalidCredentials
 		} else {
-			return 0, err
+			return nil, err
 		}
 	}
 
-	if err := bcrypt.CompareHashAndPassword(hashedPassword, []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return 0, models.ErrInvalidCredentials
+			return nil, models.ErrInvalidCredentials
 		} else {
-			return 0, err
+			return nil, err
 		}
 	}
 
-	return id, nil
+	return user, nil
 }

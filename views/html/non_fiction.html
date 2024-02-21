@@ -1,11 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>Non-Fiction</h1>
-</body>
-</html>
+{{ template "base" .}}
+{{ define "title" }} About {{ end }}
+{{ define "content" }}
+<div class="container">
+    <h1>Non Fiction</h1>
+    {{ with .Book }}
+    <div class="row ms-1 mt-3"> 
+        <div class="col col-sm-6 mb-3 mb-sm-0">
+            <div class="card" style="width: 10rem; height: 22rem;">
+            <img src="../static/images/{{ .Image }}" class="card-img-top" alt="..." width="10" height="200">
+            <div class="card-body">
+                <h6 class="card-title text-center">{{ .Title }}</h6>
+                <p class="card-text text-center">Rp. {{ .Price }}</p>
+                <a href="/add-chart" class="btn btn-primary btn-chart ms-2">Add to chart</a>
+            </div>
+        </div>
+        </div>
+    </div>
+    
+    {{ end }}
+</div>
+{{ end }}
