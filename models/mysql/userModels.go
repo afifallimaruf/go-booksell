@@ -48,11 +48,11 @@ func Authenticate(email, password string) (*models.User, error) {
 	// var id int
 	// var hashedPassword []byte
 
-	query := "SELECT id, hashed_password, role FROM users WHERE email = ? AND active = TRUE"
+	query := "SELECT id, hashed_password FROM users WHERE email = ? AND active = TRUE"
 
 	row := db.QueryRow(query, email)
 	user := &models.User{}
-	err = row.Scan(&user.Id, &user.HashedPassword, &user.Role)
+	err = row.Scan(&user.Id, &user.HashedPassword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, models.ErrInvalidCredentials
